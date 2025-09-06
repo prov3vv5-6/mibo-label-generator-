@@ -243,6 +243,20 @@
       //   return regDiv;
       // }
 
+      // function createRegIcons() {
+      //   const regDiv = document.createElement("div");
+      //   regDiv.className = "reg-icons";
+
+      //   const fcc = document.createElement("img");
+      //   fcc.src = "images/fcc-logo.svg"; // make sure this matches your file name & path
+      //   fcc.alt = "FCC";
+      //   fcc.style.width = "24px";
+      //   fcc.style.height = "auto";
+      //   regDiv.appendChild(fcc);
+
+      //   return regDiv;
+      // }
+
       function createRegIcons() {
         const regDiv = document.createElement("div");
         regDiv.className = "reg-icons";
@@ -253,6 +267,14 @@
         fcc.style.width = "24px";
         fcc.style.height = "auto";
         regDiv.appendChild(fcc);
+
+        // Rx Only logo
+        const rx = document.createElement("img");
+        rx.src = "images/rx-only.svg";
+        rx.alt = "Rx Only";
+        rx.style.width = "24px";
+        rx.style.height = "auto";
+        regDiv.appendChild(rx);
 
         return regDiv;
       }
@@ -305,7 +327,7 @@
         const footer = document.createElement("div");
         footer.className = "footer";
         footer.innerHTML = `<div class="patent">${defaultStatic.regulatory.patent}</div>
-                          <div class="warning"><div class="reg-icon" style="width:18px;height:14px">!</div><div style="font-size:9px">Rx only</div></div>`;
+                          <div class="warning">`;
 
         l.appendChild(top);
         l.appendChild(mid);
