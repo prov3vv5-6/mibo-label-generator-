@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mibo Medical Group - Label Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <style>
+      @page {
+        size: letter;
+        margin: 0;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f0f0f0;
+      }
+
+      #controls {
+        padding: 10px;
+        background: #fff;
+        margin-bottom: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        border-bottom: 1px solid #ccc;
+        border: 3px solid rgb(71, 71, 249);
+      }
+
+      #controls label {
+        font-size: 12px;
+        margin-right: 5px;
+        /* border: 3px solid rgb(118, 118, 120); */
+      }
+
+      #controls input {
+        font-size: 12px;
+        padding: 2px 4px;
+        margin-right: 10px;
+        /* border: 3px solid rgb(163, 14, 163); */
+      }
+
+      #generateBtn {
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+
+      .sheets {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      :root {
+        --label-width: 4in;
+        --label-height: 2in;
+        --gap-x: 0.2in;
+        --gap-y: 0in;
+        --sheet-padding-top: 0.5in; /* fixed margin */
+        --sheet-padding-left: 0.16in; /* fixed margin */
+        /* .15 to far to the left */
+      }
+
+      .sheet {
+        width: 8.5in;
+        height: 11in;
+        background: white;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        margin-bottom: 10px;
+        box-sizing: border-box;
+        page-break-after: always;
+        padding-top: var(--sheet-padding-top);
+        padding-left: var(--sheet-padding-left);
+      }
+
+      .labels-grid {
+        display: grid;
+        grid-template-columns: repeat(2, var(--label-width));
+        grid-auto-rows: var(--label-height);
+        column-gap: var(--gap-x);
+        row-gap: var(--gap-y);
+      }
+
+      .label {
+        width: var(--label-width);
+        height: var(--label-height);
+        /* border: 1px dashed #ccc; */
+        box-sizing: border-box;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+
+      .label-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        align-items: flex-start;
+      }
+
+      .company-name {
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      .reg-icons {
+        display: flex;
+        gap: 2px;
+        font-size: 10px;
+      }
+
+      .reg-icon {
+        border: 1px solid black;
+        padding: 1px 2px;
+        font-size: 8px;
+        line-height: 1;
+        display: inline-block;
+      }
+
+      .center-block {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+      }
+
+      .text-block {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .right-block {
+        text-align: right;
+        font-size: 9px;
+        max-width: 50%;
+      }
+
+      .barcode {
+        text-align: center;
+        margin-top: 2px;
+      }
+
+      .barcode svg {
+        width: 100%;
+        height: 50px;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 9px;
+      }
+
+      .patent {
+        font-size: 8px;
+      }
+
+      .warning {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+
+      @media print {
+        body {
+          background: none;
+        }
+        .sheet {
+          box-shadow: none;
+          margin: 0 auto;
+        }
+        #controls {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="controls">
+      <label>Model: <input id="modelNumber" value="3932" /></label>
+      <label>First Serial: <input id="firstSerial" value="250800250" /></label>
+      <label>Count: <input id="count" type="number" value="10" /></label>
+      <label>MFD Display: <input id="mfdDisplay" value="08 AUG 2025" /></label>
+      <label
+        >MFD Encoded (YYMMDD): <input id="mfdEncoded" value="250808"
+      /></label>
+      <label>GS1 Prefix: <input id="gs1Prefix" value="00869086000355" /></label>
+      <button id="generateBtn">Generate</button>
+    </div>
+
+    <div class="sheets" id="sheetsContainer"></div>
+
+    <script>
+      const LABELS_PER_SHEET = 10;
+
+      const defaultStatic = {
+        companyName: "Mibo Medical Group",
+        companyInfoLines: [
+          "www.mibomedicalgroup.com",
+          "1-855-642-6356",
+          "Manufactured for Mibo Medical Group",
+          "Input: 100-240V~, 50/60Hz 1.5A",
+        ],
+        regulatory: { patent: "Patent US 10, 130, 507" },
+      };
+
+      function escapeHtml(str) {
+        return str.replace(
+          /[&<>'"]/g,
+          (tag) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[tag])
+        );
+      }
+
+      function buildSerialList() {
+        const firstSerial = document.getElementById("firstSerial").value.trim();
+        const count = parseInt(document.getElementById("count").value);
+        const serials = [];
+        let num = parseInt(firstSerial, 10);
+        for (let i = 0; i < count; i++) serials.push(String(num + i));
+        return serials;
+      }
+
+      // function createRegIcons() {
+      //   const regDiv = document.createElement("div");
+      //   regDiv.className = "reg-icons";
+      //   ["FCC"].forEach((text) => {
+      //     const div = document.createElement("div");
+      //     div.className = "reg-icon";
+      //     div.textContent = text;
+      //     regDiv.appendChild(div);
+      //   });
+      //   return regDiv;
+      // }
+
+      function createRegIcons() {
+        const regDiv = document.createElement("div");
+        regDiv.className = "reg-icons";
+
+        const fcc = document.createElement("img");
+        fcc.src = "images/fcc-logo.svg"; // make sure this matches your file name & path
+        fcc.alt = "FCC";
+        fcc.style.width = "24px";
+        fcc.style.height = "auto";
+        regDiv.appendChild(fcc);
+
+        return regDiv;
+      }
+
+      function createLabelElement({
+        model,
+        serial,
+        mfdDisplay,
+        mfdEncoded,
+        gs1Prefix,
+      }) {
+        const l = document.createElement("div");
+        l.className = "label";
+
+        const top = document.createElement("div");
+        top.className = "label-top";
+        const leftTop = document.createElement("div");
+        leftTop.innerHTML = `<div class="company-name">${defaultStatic.companyName}</div>`;
+        const rightTop = createRegIcons();
+        top.appendChild(leftTop);
+        top.appendChild(rightTop);
+
+        const mid = document.createElement("div");
+        mid.className = "center-block";
+        const tb = document.createElement("div");
+        tb.className = "text-block";
+        tb.innerHTML = `<div class="model">Model: ${escapeHtml(model)}</div>
+                      <div class="sr">S/N: ${escapeHtml(serial)}</div>
+                      <div class="sr">MFD: ${escapeHtml(mfdDisplay)}</div>`;
+        const rb = document.createElement("div");
+        rb.className = "right-block";
+        rb.innerHTML = defaultStatic.companyInfoLines
+          .map((s) => `<div>${escapeHtml(s)}</div>`)
+          .join("");
+        mid.appendChild(tb);
+        mid.appendChild(rb);
+
+        const gs1Human = `(01)${gs1Prefix}(11)${mfdEncoded}(21)${serial}`;
+        const gs1Raw = `01${gs1Prefix}11${mfdEncoded}21${serial}`;
+        const barcodeWrap = document.createElement("div");
+        barcodeWrap.className = "barcode";
+        const svg = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "svg"
+        );
+        svg.dataset.human = gs1Human;
+        svg.dataset.raw = gs1Raw;
+        barcodeWrap.appendChild(svg);
+
+        const footer = document.createElement("div");
+        footer.className = "footer";
+        footer.innerHTML = `<div class="patent">${defaultStatic.regulatory.patent}</div>
+                          <div class="warning"><div class="reg-icon" style="width:18px;height:14px">!</div><div style="font-size:9px">Rx only</div></div>`;
+
+        l.appendChild(top);
+        l.appendChild(mid);
+        l.appendChild(barcodeWrap);
+        l.appendChild(footer);
+
+        return { el: l, svg: svg, gs1Human, gs1Raw };
+      }
+
+      function clearPreview() {
+        document.getElementById("sheetsContainer").innerHTML = "";
+      }
+
+      function generateSheets() {
+        clearPreview();
+        const serials = buildSerialList();
+        const model =
+          document.getElementById("modelNumber").value.trim() || "3932";
+        const mfdDisplay =
+          document.getElementById("mfdDisplay").value.trim() || "08 AUG 2025";
+        const mfdEncoded = document.getElementById("mfdEncoded").value.trim();
+        const gs1Prefix = document.getElementById("gs1Prefix").value.trim();
+
+        const sheetsNeeded = Math.ceil(serials.length / LABELS_PER_SHEET);
+        let index = 0;
+        const elementsToInit = [];
+
+        for (let s = 0; s < sheetsNeeded; s++) {
+          const sheet = document.createElement("div");
+          sheet.className = "sheet";
+          const grid = document.createElement("div");
+          grid.className = "labels-grid";
+
+          for (let i = 0; i < LABELS_PER_SHEET; i++) {
+            const serial = serials[index];
+            if (!serial) {
+              const gap = document.createElement("div");
+              gap.className = "label";
+              grid.appendChild(gap);
+            } else {
+              const { el, svg, gs1Human, gs1Raw } = createLabelElement({
+                model,
+                serial,
+                mfdDisplay,
+                mfdEncoded,
+                gs1Prefix,
+              });
+              grid.appendChild(el);
+              elementsToInit.push({ svg, gs1Human, gs1Raw });
+            }
+            index++;
+          }
+          sheet.appendChild(grid);
+          document.getElementById("sheetsContainer").appendChild(sheet);
+        }
+
+        elementsToInit.forEach((item) => {
+          try {
+            JsBarcode(item.svg, item.gs1Raw, {
+              format: "CODE128",
+              useFnc1: true,
+              displayValue: true,
+              text: item.gs1Human,
+              font: "monospace",
+              fontSize: 11,
+              height: 50,
+              margin: 2,
+              quiet: 20,
+            });
+          } catch (err) {
+            console.error("Barcode error", err);
+            const p = document.createElement("div");
+            p.textContent = item.gs1Human;
+            p.style.fontSize = "10px";
+            item.svg.parentNode.replaceChild(p, item.svg);
+          }
+        });
+      }
+
+      document
+        .getElementById("generateBtn")
+        .addEventListener("click", generateSheets);
+    </script>
+  </body>
+</html>
