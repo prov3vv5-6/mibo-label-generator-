@@ -120,6 +120,12 @@
         display: inline-block;
       }
 
+      /* ⬇ New rule for spacing between FCC and Rx logos */
+      .reg-icons img {
+        margin-right: 6px; /* adds space between each icon */
+        vertical-align: middle; /* keeps them aligned */
+      }
+
       .center-block {
         display: flex;
         justify-content: space-between;
@@ -261,6 +267,7 @@
         const regDiv = document.createElement("div");
         regDiv.className = "reg-icons";
 
+        // FCC logo
         const fcc = document.createElement("img");
         fcc.src = "images/fcc-logo.svg"; // make sure this matches your file name & path
         fcc.alt = "FCC";
