@@ -85,7 +85,7 @@
       .label {
         width: var(--label-width);
         height: var(--label-height);
-        /* border: 1px dashed #ccc; */
+        border: 1px dashed #ccc;
         box-sizing: border-box;
         padding: 10px;
         display: flex;
@@ -110,6 +110,7 @@
         display: flex;
         gap: 2px;
         font-size: 10px;
+        /* border: 1px solid pink; */
       }
 
       .reg-icon {
@@ -142,11 +143,13 @@
         text-align: right;
         font-size: 9px;
         max-width: 50%;
+        margin-top: 6px;
       }
 
       .barcode {
         text-align: center;
-        margin-top: 2px;
+        margin-top: 10px;
+        /* border: 2px solid orange; */
       }
 
       .barcode svg {
@@ -154,22 +157,40 @@
         height: 50px;
       }
 
-      .footer {
+      /* .footer {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
         font-size: 9px;
+      } */
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 9px;
+        /* border: 2px solid green; */
+        margin-top: 7px;
+        /* min-height: 45px; */
+      }
+      /* .footer img {
+        margin-top: -5px; 
+      } */
+      .qr-code {
+        align-self: flex-start;
+        /* margin-top: -2px;  */
+        /* border: 1px solid blue; */
+        /* padding-bottom: 3px; */
       }
 
       .patent {
         font-size: 8px;
       }
 
-      .warning {
+      /* .warning {
         display: flex;
         align-items: center;
         gap: 2px;
-      }
+      } */
 
       @media print {
         body {
@@ -208,7 +229,7 @@
         companyInfoLines: [
           "www.mibomedicalgroup.com",
           "1-855-642-6356",
-          "Manufactured for Mibo Medical Group",
+          // "Manufactured for Mibo Medical Group",
           "Input: 100-240V~, 50/60Hz 1.5A",
         ],
         regulatory: { patent: "Patent US 10, 130, 507" },
@@ -236,32 +257,6 @@
         for (let i = 0; i < count; i++) serials.push(String(num + i));
         return serials;
       }
-
-      // function createRegIcons() {
-      //   const regDiv = document.createElement("div");
-      //   regDiv.className = "reg-icons";
-      //   ["FCC"].forEach((text) => {
-      //     const div = document.createElement("div");
-      //     div.className = "reg-icon";
-      //     div.textContent = text;
-      //     regDiv.appendChild(div);
-      //   });
-      //   return regDiv;
-      // }
-
-      // function createRegIcons() {
-      //   const regDiv = document.createElement("div");
-      //   regDiv.className = "reg-icons";
-
-      //   const fcc = document.createElement("img");
-      //   fcc.src = "images/fcc-logo.svg"; // make sure this matches your file name & path
-      //   fcc.alt = "FCC";
-      //   fcc.style.width = "24px";
-      //   fcc.style.height = "auto";
-      //   regDiv.appendChild(fcc);
-
-      //   return regDiv;
-      // }
 
       function createRegIcons() {
         const regDiv = document.createElement("div");
@@ -294,7 +289,7 @@
         // warning icon
         const warningIcon = document.createElement("img");
         warningIcon.src = "images/warning-icon.svg";
-        warningIcon.alt = "info-booklet";
+        warningIcon.alt = "warning-icon";
         warningIcon.style.width = "24px";
         warningIcon.style.height = "auto";
         regDiv.appendChild(warningIcon);
@@ -351,6 +346,15 @@
         footer.className = "footer";
         footer.innerHTML = `<div class="patent">${defaultStatic.regulatory.patent}</div>
                           <div class="warning">`;
+
+        //QR code
+        const qrCode = document.createElement("img");
+        qrCode.src = "images/qr-code.svg";
+        qrCode.alt = "QR Code";
+        qrCode.style.width = "40px";
+        qrCode.style.height = "40px";
+        qrCode.className = "qr-code";
+        footer.appendChild(qrCode);
 
         l.appendChild(top);
         l.appendChild(mid);
